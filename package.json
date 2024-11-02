@@ -1,0 +1,15 @@
+{
+  "name": "ezapi",
+  "description": "Access a JSON API in React",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathan-osman/ezapi.git"
+  },
+  "author": "Nathan Osman <nathan@nathanosman.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nathan-osman/ezapi/issues"
+  },
+  "homepage": "https://github.com/nathan-osman/ezapi"
+}
