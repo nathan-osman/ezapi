@@ -1,0 +1,12 @@
+{
+  "folders": [
+    {
+      "path": "./"
+    }
+  ],
+  "settings": {
+    "editor.indentSize": 2,
+    "typescript.format.semicolons": "remove",
+    "typescript.preferences.quoteStyle": "single"
+  }
+}
