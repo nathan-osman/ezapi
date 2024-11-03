@@ -2,14 +2,15 @@
   "compilerOptions": {
     "target": "es5",
     "module": "es6",
-    "outDir": "./dist",
-    "declaration": true,
-    "jsx": "react-jsx",
     "lib": [
       "DOM",
       "ES2022",
     ],
+    "jsx": "react-jsx",
+    "declaration": true,
+    "outDir": "./dist",
+    "strict": true,
     "moduleResolution": "node",
-    "strict": true
+    "esModuleInterop": true,
   }
 }
