@@ -3,8 +3,8 @@
     "target": "es5",
     "module": "es6",
     "lib": [
-      "DOM",
-      "ES2022",
+      "dom",
+      "es2022",
     ],
     "jsx": "react-jsx",
     "declaration": true,
@@ -12,5 +12,8 @@
     "strict": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
-  }
+  },
+  "include": [
+    "src/**/*"
+  ]
 }
