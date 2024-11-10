@@ -1,5 +1,5 @@
 {
-  "name": "ezapi",
+  "name": "@nathan-osman/ezapi",
   "version": "0.0.1",
   "description": "Access a JSON API in React",
   "keywords": [
