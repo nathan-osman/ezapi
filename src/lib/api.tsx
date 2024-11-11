@@ -2,13 +2,16 @@ import {
   createContext,
   PropsWithChildren,
   useContext,
+  useState,
 } from 'react'
 import { z } from 'zod'
 import { ApiError } from '../util/error'
 
+type ApiHeaders = Record<string, string>
+
 type ApiProviderProps = {
   base?: string
-  headers?: HeadersInit
+  headers?: ApiHeaders
   includeCredentials?: boolean
 }
 
@@ -33,6 +36,8 @@ type ApiContextType = {
     body: any,
   ) => Promise<z.TypeOf<T>>
   delete: (url: string) => Promise<any>
+  setHeader: (name: string, value: string) => void
+  clearHeader: (name: string) => void
 }
 
 const ApiContext = createContext<ApiContextType | null>(null)
@@ -40,6 +45,8 @@ const ApiContext = createContext<ApiContextType | null>(null)
 export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
 
   const base = props.base ?? ""
+
+  const [headers, setHeaders] = useState<ApiHeaders>(props.headers ?? {})
 
   const _xmlHttp = async function (
     method: string,
@@ -50,7 +57,7 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
       const xhr = new XMLHttpRequest()
       xhr.open(method, `${base}${url}`, true)
       xhr.withCredentials = true
-      new Headers(props.headers).forEach((v, k) => xhr.setRequestHeader(k, v))
+      new Headers(headers).forEach((v, k) => xhr.setRequestHeader(k, v))
       xhr.onreadystatechange = () => {
         if (xhr.readyState !== XMLHttpRequest.DONE) {
           return
@@ -79,7 +86,7 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
   ): Promise<any> {
     let init: RequestInit = {
       method,
-      headers: props.headers,
+      headers: headers,
     }
     if (props.includeCredentials) {
       init.credentials = 'include'
@@ -150,6 +157,15 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
       body: any,
     ): Promise<z.TypeOf<T>> => _doReq(schema, "PATCH", url, body),
     delete: (url: string): Promise<any> => _doReq(null, "DELETE", url),
+    setHeader: (name: string, value: string) => {
+      setHeaders(h => ({
+        ...h,
+        [name]: value,
+      }))
+    },
+    clearHeader: (name: string) => {
+      setHeaders(({ [name]: _, ...h }) => h)
+    },
   }
 
   return (
