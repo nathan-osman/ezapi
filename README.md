@@ -13,6 +13,7 @@ Features include:
 - Support for cross-origin requests with cookies (`credentials: 'include'`)
 - Response validation with [Zod](https://zod.dev/) - including full TypeScript support!
 - Fallback to `XMLHttpRequest` when sending `FormData` (useful for uploads)
+- Ability to monitor upload progress
 
 ### Installation
 
@@ -20,7 +21,7 @@ To use the package in your application, simply run:
 
     npm i --save @nathan-osman/ezapi
 
-### Usage
+### Setup
 
 Begin by importing `ApiProvider` and wrapping your root element with it:
 
@@ -30,13 +31,25 @@ import { ApiProvider } from '@nathan-osman/ezapi'
 ...
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <ApiProvider base="https://example.com">
+  <ApiProvider>
     <App />
   </ApiProvider>
 )
 ```
 
-Now you can use the API within any component:
+You can also specify a base URI, headers to include in all requests, and enable credentials for cross-origin requests:
+
+```javascript
+<ApiProvider
+  base="https://example.com"
+  headers={{"X-MyHeader": "Value"}}
+  includeCredentials={true}
+>
+```
+
+### Usage
+
+The example below shows how to use the API within a component:
 
 ```javascript
 import { useEffect, useState } from 'react'
@@ -73,4 +86,50 @@ export default function MyComponent() {
 }
 ```
 
-The component above includes a loading message, error handling, and built-in type checking for the response!
+The example above includes a loading message, error handling, and built-in type checking for the response!
+
+Likewise, sending data is as simple as:
+
+```javascript
+const myData = {
+  username: "john",
+  password: "mYPaSsWoRd",
+}
+
+api.put(ResponseSchema, '/api/data', myData)
+api.post(ResponseSchema, '/api/data', myData)
+api.patch(ResponseSchema, '/api/data', myData)
+```
+
+Delete is not expected to accept or return any data:
+
+```javascript
+api.delete('/api/object')
+```
+
+### Advanced Usage
+
+#### Setting Headers inside `<ApiProvider>`
+
+Components inside `<ApiProvider>` can set or clear headers with:
+
+```javascript
+const api = useApi()
+api.setHeader("X-MyHeader", "Value")
+api.clearHeader("X-MyHeader")
+```
+
+#### Upload Progress
+
+To monitor progress of a `FormData` request (such as a file upload), pass a callback after the third parameter:
+
+```javascript
+api.post(
+  ResponseSchema,
+  '/api/upload',
+  formData,
+  p => console.log(`Progress: ${p}%`),
+)
+```
+
+(Note that this is only available when the type of the third parameter is `FormData`. Other requests will use `fetch()` internally and consequently cannot report progress.)
