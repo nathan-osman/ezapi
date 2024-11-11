@@ -3,6 +3,7 @@ import {
   PropsWithChildren,
   useContext,
 } from 'react'
+import { z } from 'zod'
 import { ApiError } from '../util/error'
 
 type ApiProviderProps = {
@@ -12,10 +13,25 @@ type ApiProviderProps = {
 }
 
 type ApiContextType = {
-  get: (url: string) => Promise<any>
-  put: (url: string, body: any) => Promise<any>
-  post: (url: string, body?: any) => Promise<any>
-  patch: (url: string, body: any) => Promise<any>
+  get: <T extends z.ZodTypeAny>(
+    schema: T,
+    url: string,
+  ) => Promise<z.TypeOf<T>>
+  put: <T extends z.ZodTypeAny>(
+    schema: T,
+    url: string,
+    body: any,
+  ) => Promise<z.TypeOf<T>>
+  post: <T extends z.ZodTypeAny>(
+    schema: T,
+    url: string,
+    body?: any,
+  ) => Promise<z.TypeOf<T>>
+  patch: <T extends z.ZodTypeAny>(
+    schema: T,
+    url: string,
+    body: any,
+  ) => Promise<z.TypeOf<T>>
   delete: (url: string) => Promise<any>
 }
 
@@ -25,11 +41,12 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
 
   const base = props.base ?? ""
 
-  const _fetch = async function (
+  const _fetch = async function <T extends z.ZodTypeAny>(
+    schema: T | null,
     method: string,
     url: string,
     body?: any,
-  ): Promise<any> {
+  ): Promise<z.TypeOf<T>> {
     let init: RequestInit = {
       method,
       headers: props.headers,
@@ -57,17 +74,38 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
       }
       throw new ApiError(null, response.status)
     }
-    if (response.status !== 204) {
-      return await response.json()
+    const json = await response.json()
+    if (schema === null) {
+      return json
     }
+    const result = schema.safeParse(json)
+    if (!result.success) {
+      throw new Error("validation error")
+    }
+    return result.data
   }
 
   const apiContext = {
-    get: (url: string): Promise<any> => _fetch("GET", url),
-    put: (url: string, body: any): Promise<any> => _fetch("PUT", url, body),
-    post: (url: string, body?: any): Promise<any> => _fetch("POST", url, body),
-    patch: (url: string, body: any): Promise<any> => _fetch("PATCH", url, body),
-    delete: (url: string): Promise<any> => _fetch("DELETE", url),
+    get: <T extends z.ZodTypeAny>(
+      schema: T,
+      url: string,
+    ): Promise<z.TypeOf<T>> => _fetch(schema, "GET", url),
+    put: <T extends z.ZodTypeAny>(
+      schema: T,
+      url: string,
+      body: any,
+    ): Promise<z.TypeOf<T>> => _fetch(schema, "PUT", url, body),
+    post: <T extends z.ZodTypeAny>(
+      schema: T,
+      url: string,
+      body?: any,
+    ): Promise<z.TypeOf<T>> => _fetch(schema, "POST", url, body),
+    patch: <T extends z.ZodTypeAny>(
+      schema: T,
+      url: string,
+      body: any,
+    ): Promise<z.TypeOf<T>> => _fetch(schema, "PATCH", url, body),
+    delete: (url: string): Promise<any> => _fetch(null, "DELETE", url),
   }
 
   return (
