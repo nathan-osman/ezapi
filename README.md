@@ -12,6 +12,7 @@ Features include:
 - Specify extra HTTP headers to use for things like authentication
 - Support for cross-origin requests with cookies (`credentials: 'include'`)
 - Response validation with [Zod](https://zod.dev/) - including full TypeScript support!
+- Fallback to `XMLHttpRequest` when sending `FormData` (useful for uploads)
 
 ### Installation
 
