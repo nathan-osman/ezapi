@@ -7,16 +7,26 @@ import fetch from 'jest-fetch-mock'
 import { renderHook } from '@testing-library/react'
 import { z } from 'zod'
 import { ApiProvider, useApi } from '../src'
-import { sendMock, XMLHttpRequestMock } from '../__mocks__/xmlHttpRequestMock'
+import {
+  openMock,
+  sendMock,
+  setRequestHeaderMock,
+  XMLHttpRequestMock,
+} from '../__mocks__/xmlHttpRequestMock'
 
 const testBase = "http://example.com"
 const testPath = '/'
 const testValueGood = { "test": "test" }
 const testValueBad1 = { "test": 123 }
 const testValueBad2 = { "bad": "test" }
+const testKey = "key"
+const testVal = "val"
 const testHeaders = {
-  "key": "value",
+  [testKey]: testVal,
 }
+const testFormData = new FormData()
+
+testFormData.set(testKey, testVal)
 
 const TestTypeSchema = z.object({
   test: z.string(),
@@ -87,10 +97,14 @@ describe('testing ApiProvider', () => {
 
   it('correctly sends FormData using XmlHttpRequest', async () => {
     XMLHttpRequestMock.mockData(200, JSON.stringify(testValueGood))
-    const formData = new FormData()
-    formData.set("test", "test")
-    await expect(result.current.post(TestTypeSchema, testPath, formData)).resolves.toBeDefined()
+    await expect(result.current.post(TestTypeSchema, testPath, testFormData)).resolves.toBeDefined()
+    expect(openMock).toHaveBeenCalled()
+    expect(openMock.mock.calls[0][0]).toEqual('POST')
+    expect(openMock.mock.calls[0][1]).toEqual(`${testBase}${testPath}`)
     expect(sendMock).toHaveBeenCalled()
-    expect(sendMock.mock.calls[0][0]).toStrictEqual(formData)
+    expect(sendMock.mock.calls[0][0]).toStrictEqual(testFormData)
+    expect(setRequestHeaderMock).toHaveBeenCalled()
+    expect(setRequestHeaderMock.mock.calls[0][0]).toStrictEqual(testKey)
+    expect(setRequestHeaderMock.mock.calls[0][1]).toStrictEqual(testVal)
   })
 })

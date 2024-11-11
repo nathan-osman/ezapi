@@ -1,4 +1,7 @@
-export const sendMock = jest.fn<void, [FormData]>(function () {
+export const openMock = jest.fn()
+export const setRequestHeaderMock = jest.fn()
+
+export const sendMock = jest.fn(function (formData: FormData) {
   this.readyState = 4
   this.status = XMLHttpRequestMock.status
   this.responseText = XMLHttpRequestMock.responseText
@@ -10,9 +13,9 @@ export const sendMock = jest.fn<void, [FormData]>(function () {
 export class XMLHttpRequestMock {
   constructor() { }
 
-  open = jest.fn()
+  open = openMock
   send = sendMock
-  setRequestHeader = jest.fn()
+  setRequestHeader = setRequestHeaderMock
 
   static DONE = 4
 
