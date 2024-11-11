@@ -1,6 +1,6 @@
 {
   "name": "@nathan-osman/ezapi",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Access a JSON API in React",
   "keywords": [
     "api",
