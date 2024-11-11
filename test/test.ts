@@ -6,6 +6,7 @@ import fetch from 'jest-fetch-mock'
 import { renderHook } from '@testing-library/react'
 import { z } from 'zod'
 import { ApiProvider, useApi } from '../src'
+import { sendMock, XMLHttpRequestMock } from '../__mocks__/xmlHttpRequestMock'
 
 const testPath = '/'
 const testValueGood = { "test": "test" }
@@ -20,6 +21,7 @@ describe('testing ApiProvider', () => {
 
   beforeEach(() => {
     fetch.resetMocks()
+    XMLHttpRequestMock.resetMocks()
   })
 
   const { result } = renderHook(() => useApi(), {
@@ -63,4 +65,12 @@ describe('testing ApiProvider', () => {
     expect(JSON.parse(fetch.mock.calls[0][1]?.body as string)).toStrictEqual(testValueGood)
   })
 
+  it('correctly sends FormData using XmlHttpRequest', async () => {
+    XMLHttpRequestMock.mockData(200, JSON.stringify(testValueGood))
+    const formData = new FormData()
+    formData.set("test", "test")
+    await expect(result.current.post(TestTypeSchema, testPath, formData)).resolves.toBeDefined()
+    expect(sendMock).toHaveBeenCalled()
+    expect(sendMock.mock.calls[0][0]).toStrictEqual(formData)
+  })
 })
