@@ -1,4 +1,4 @@
-export const sendMock = jest.fn(function () {
+export const sendMock = jest.fn<void, [FormData]>(function () {
   this.readyState = 4
   this.status = XMLHttpRequestMock.status
   this.responseText = XMLHttpRequestMock.responseText
