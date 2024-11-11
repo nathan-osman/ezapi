@@ -41,12 +41,42 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
 
   const base = props.base ?? ""
 
-  const _fetch = async function <T extends z.ZodTypeAny>(
-    schema: T | null,
+  const _xmlHttp = async function (
     method: string,
     url: string,
-    body?: any,
-  ): Promise<z.TypeOf<T>> {
+    formData: FormData,
+  ): Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open(method, `${base}${url}`, true)
+      xhr.withCredentials = true
+      new Headers(props.headers).forEach((v, k) => xhr.setRequestHeader(k, v))
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState !== XMLHttpRequest.DONE) {
+          return
+        }
+        let data
+        try {
+          data = JSON.parse(xhr.responseText)
+        } catch {
+          reject(new ApiError(null, xhr.status))
+          return
+        }
+        if (xhr.status < 200 || xhr.status >= 300) {
+          reject(new ApiError(data, xhr.status))
+          return
+        }
+        resolve(data)
+      }
+      xhr.send(formData)
+    })
+  }
+
+  const _fetch = async function (
+    method: string,
+    url: string,
+    body: any,
+  ): Promise<any> {
     let init: RequestInit = {
       method,
       headers: props.headers,
@@ -65,16 +95,30 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
       }
     }
     const response = await fetch(`${base}${url}`, init)
-    if (!response.ok) {
-      let error
-      try {
-        error = await response.json()
-      } catch (e) {
-        throw new ApiError(error, response.status)
-      }
+    let data
+    try {
+      data = await response.json()
+    } catch {
       throw new ApiError(null, response.status)
     }
-    const json = await response.json()
+    if (!response.ok) {
+      throw new ApiError(data, response.status)
+    }
+    return data
+  }
+
+  const _doReq = async function <T extends z.ZodTypeAny>(
+    schema: T | null,
+    method: string,
+    url: string,
+    body?: any,
+  ): Promise<z.TypeOf<T>> {
+    let json
+    if (body instanceof FormData) {
+      json = await _xmlHttp(method, url, body)
+    } else {
+      json = await _fetch(method, url, body)
+    }
     if (schema === null) {
       return json
     }
@@ -89,23 +133,23 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
     get: <T extends z.ZodTypeAny>(
       schema: T,
       url: string,
-    ): Promise<z.TypeOf<T>> => _fetch(schema, "GET", url),
+    ): Promise<z.TypeOf<T>> => _doReq(schema, "GET", url),
     put: <T extends z.ZodTypeAny>(
       schema: T,
       url: string,
       body: any,
-    ): Promise<z.TypeOf<T>> => _fetch(schema, "PUT", url, body),
+    ): Promise<z.TypeOf<T>> => _doReq(schema, "PUT", url, body),
     post: <T extends z.ZodTypeAny>(
       schema: T,
       url: string,
       body?: any,
-    ): Promise<z.TypeOf<T>> => _fetch(schema, "POST", url, body),
+    ): Promise<z.TypeOf<T>> => _doReq(schema, "POST", url, body),
     patch: <T extends z.ZodTypeAny>(
       schema: T,
       url: string,
       body: any,
-    ): Promise<z.TypeOf<T>> => _fetch(schema, "PATCH", url, body),
-    delete: (url: string): Promise<any> => _fetch(null, "DELETE", url),
+    ): Promise<z.TypeOf<T>> => _doReq(schema, "PATCH", url, body),
+    delete: (url: string): Promise<any> => _doReq(null, "DELETE", url),
   }
 
   return (
