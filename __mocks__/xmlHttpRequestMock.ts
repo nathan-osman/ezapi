@@ -6,7 +6,14 @@ export const sendMock = jest.fn(function (formData: FormData) {
   this.status = XMLHttpRequestMock.status
   this.responseText = XMLHttpRequestMock.responseText
   if (this.upload.onprogress) {
-    this.upload.onprogress(50)
+    this.upload.onprogress(new ProgressEvent(
+      'progress',
+      {
+        lengthComputable: true,
+        loaded: 50,
+        total: 100,
+      }
+    ))
   }
   if (this.onreadystatechange) {
     this.onreadystatechange()

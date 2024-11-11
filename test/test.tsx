@@ -99,7 +99,6 @@ describe('testing ApiProvider (XMLHttpRequest)', () => {
 
   beforeEach(() => {
     XMLHttpRequestMock.mockData(400, JSON.stringify(testValueGood))
-
   })
 
   it('throws an error for HTTP errors', async () => {
@@ -118,5 +117,18 @@ describe('testing ApiProvider (XMLHttpRequest)', () => {
     expect(setRequestHeaderMock).toHaveBeenCalled()
     expect(setRequestHeaderMock.mock.calls[0][0]).toStrictEqual(testKey)
     expect(setRequestHeaderMock.mock.calls[0][1]).toStrictEqual(testVal)
+  })
+
+  it('reports progress as the request is sent', async () => {
+    XMLHttpRequestMock.mockData(200, JSON.stringify(testValueGood))
+    const callbackMock = jest.fn()
+    await expect(result.current.post(
+      TestTypeSchema,
+      testPath,
+      testFormData,
+      callbackMock,
+    )).resolves.toBeDefined()
+    expect(callbackMock).toHaveBeenCalled()
+    expect(callbackMock.mock.calls[0][0]).toEqual(50)
   })
 })

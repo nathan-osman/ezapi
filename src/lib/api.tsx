@@ -6,9 +6,9 @@ import {
 } from 'react'
 import { z } from 'zod'
 import { ApiError } from '../util/error'
-import { ProgressPromise } from '../util/progressPromise'
 
 type ApiHeaders = Record<string, string>
+type ProgressCallback = (value: number) => void
 
 type ApiProviderProps = {
   base?: string
@@ -25,16 +25,19 @@ type ApiContextType = {
     schema: T,
     url: string,
     body: any,
+    callback?: ProgressCallback,
   ) => Promise<z.TypeOf<T>>
   post: <T extends z.ZodTypeAny>(
     schema: T,
     url: string,
     body?: any,
+    callback?: ProgressCallback,
   ) => Promise<z.TypeOf<T>>
   patch: <T extends z.ZodTypeAny>(
     schema: T,
     url: string,
     body: any,
+    callback?: ProgressCallback,
   ) => Promise<z.TypeOf<T>>
   delete: (url: string) => Promise<any>
   setHeader: (name: string, value: string) => void
@@ -53,15 +56,16 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
     method: string,
     url: string,
     formData: FormData,
+    callback?: ProgressCallback,
   ): Promise<any> {
-    return new ProgressPromise<any>((resolve, reject, progress) => {
+    return new Promise<any>((resolve, reject) => {
       const xhr = new XMLHttpRequest()
       xhr.open(method, `${base}${url}`, true)
       xhr.withCredentials = true
       new Headers(headers).forEach((v, k) => xhr.setRequestHeader(k, v))
       xhr.upload.onprogress = function (e: ProgressEvent) {
-        if (e.lengthComputable) {
-          progress(e.loaded / e.total * 100)
+        if (e.lengthComputable && callback) {
+          callback(e.loaded / e.total * 100)
         }
       }
       xhr.onreadystatechange = () => {
@@ -125,10 +129,11 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
     method: string,
     url: string,
     body?: any,
+    callback?: ProgressCallback,
   ): Promise<z.TypeOf<T>> {
     let json
     if (body instanceof FormData) {
-      json = await _xmlHttp(method, url, body)
+      json = await _xmlHttp(method, url, body, callback)
     } else {
       json = await _fetch(method, url, body)
     }
@@ -151,17 +156,20 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
       schema: T,
       url: string,
       body: any,
-    ): Promise<z.TypeOf<T>> => _doReq(schema, "PUT", url, body),
+      callback?: ProgressCallback,
+    ): Promise<z.TypeOf<T>> => _doReq(schema, "PUT", url, body, callback),
     post: <T extends z.ZodTypeAny>(
       schema: T,
       url: string,
       body?: any,
-    ): Promise<z.TypeOf<T>> => _doReq(schema, "POST", url, body),
+      callback?: ProgressCallback,
+    ): Promise<z.TypeOf<T>> => _doReq(schema, "POST", url, body, callback),
     patch: <T extends z.ZodTypeAny>(
       schema: T,
       url: string,
       body: any,
-    ): Promise<z.TypeOf<T>> => _doReq(schema, "PATCH", url, body),
+      callback?: ProgressCallback,
+    ): Promise<z.TypeOf<T>> => _doReq(schema, "PATCH", url, body, callback),
     delete: (url: string): Promise<any> => _doReq(null, "DELETE", url),
     setHeader: (name: string, value: string) => {
       setHeaders(h => ({
