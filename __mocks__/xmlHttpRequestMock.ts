@@ -5,17 +5,25 @@ export const sendMock = jest.fn(function (formData: FormData) {
   this.readyState = 4
   this.status = XMLHttpRequestMock.status
   this.responseText = XMLHttpRequestMock.responseText
+  if (this.upload.onprogress) {
+    this.upload.onprogress(50)
+  }
   if (this.onreadystatechange) {
     this.onreadystatechange()
   }
 })
 
 export class XMLHttpRequestMock {
+
   constructor() { }
 
   open = openMock
   send = sendMock
   setRequestHeader = setRequestHeaderMock
+
+  upload: {
+    onprogress?: (e: ProgressEvent) => void,
+  } = {}
 
   static DONE = 4
 

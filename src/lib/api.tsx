@@ -6,6 +6,7 @@ import {
 } from 'react'
 import { z } from 'zod'
 import { ApiError } from '../util/error'
+import { ProgressPromise } from '../util/progressPromise'
 
 type ApiHeaders = Record<string, string>
 
@@ -53,11 +54,16 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
     url: string,
     formData: FormData,
   ): Promise<any> {
-    return new Promise<any>((resolve, reject) => {
+    return new ProgressPromise<any>((resolve, reject, progress) => {
       const xhr = new XMLHttpRequest()
       xhr.open(method, `${base}${url}`, true)
       xhr.withCredentials = true
       new Headers(headers).forEach((v, k) => xhr.setRequestHeader(k, v))
+      xhr.upload.onprogress = function (e: ProgressEvent) {
+        if (e.lengthComputable) {
+          progress(e.loaded / e.total * 100)
+        }
+      }
       xhr.onreadystatechange = () => {
         if (xhr.readyState !== XMLHttpRequest.DONE) {
           return
