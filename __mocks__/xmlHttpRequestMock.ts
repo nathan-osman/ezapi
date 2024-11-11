@@ -12,6 +12,7 @@ export class XMLHttpRequestMock {
 
   open = jest.fn()
   send = sendMock
+  setRequestHeader = jest.fn()
 
   static DONE = 4
 

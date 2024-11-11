@@ -2,16 +2,21 @@
  * @jest-environment jsdom
  */
 
+import React from 'react'
 import fetch from 'jest-fetch-mock'
 import { renderHook } from '@testing-library/react'
 import { z } from 'zod'
 import { ApiProvider, useApi } from '../src'
 import { sendMock, XMLHttpRequestMock } from '../__mocks__/xmlHttpRequestMock'
 
+const testBase = "http://example.com"
 const testPath = '/'
 const testValueGood = { "test": "test" }
 const testValueBad1 = { "test": 123 }
 const testValueBad2 = { "bad": "test" }
+const testHeaders = {
+  "key": "value",
+}
 
 const TestTypeSchema = z.object({
   test: z.string(),
@@ -25,7 +30,14 @@ describe('testing ApiProvider', () => {
   })
 
   const { result } = renderHook(() => useApi(), {
-    wrapper: ApiProvider,
+    wrapper: (props) => (
+      <ApiProvider
+        base={testBase}
+        headers={testHeaders}
+      >
+        {props.children}
+      </ApiProvider>
+    ),
   })
 
   it('throws an error for aborted requests', async () => {
@@ -46,6 +58,14 @@ describe('testing ApiProvider', () => {
   it('correctly parses JSON in a response', async () => {
     fetch.mockOnce(JSON.stringify(testValueGood))
     await expect(result.current.get(TestTypeSchema, testPath)).resolves.toStrictEqual(testValueGood)
+  })
+
+  it('correctly handles base and headers', async () => {
+    fetch.mockOnce(JSON.stringify(testValueGood))
+    await expect(result.current.get(TestTypeSchema, testPath)).resolves.toBeDefined()
+    expect(fetch.mock.calls.length).toEqual(1)
+    expect(fetch.mock.calls[0][0]).toEqual(`${testBase}${testPath}`)
+    expect(fetch.mock.calls[0][1]?.headers).toStrictEqual(testHeaders)
   })
 
   it('throws an error for wrong type', async () => {
