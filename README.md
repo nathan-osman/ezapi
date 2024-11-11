@@ -4,7 +4,14 @@
 ![NPM Version](https://img.shields.io/npm/dm/%40nathan-osman%2Fezapi)
 ![NPM Version](https://img.shields.io/npm/l/%40nathan-osman%2Fezapi)
 
-This package aims to provide an extremely simple way to interact with a JSON API in a React application.
+This package aims to provide an easy way to interact with a typed JSON API in a React application.
+
+Features include:
+
+- Specify base URI for API once and use relative paths everywhere else
+- Specify extra HTTP headers to use for things like authentication
+- Support for cross-origin requests with cookies (`credentials: 'include'`)
+- Response validation with [Zod](https://zod.dev/) - including full TypeScript support!
 
 ### Installation
 
@@ -32,26 +39,37 @@ Now you can use the API within any component:
 
 ```javascript
 import { useEffect, useState } from 'react'
+import { z } from 'zod'
 import { useApi } from '@nathan-osman/ezapi'
+
+const ResponseSchema = z.object({
+  username: z.string(),
+})
+
+const Response = z.infer<typeof ResponseSchema>
 
 export default function MyComponent() {
 
   const api = useApi()
-  const [data, setData] = useState<any>()
+  const [data, setData] = useState<Response>()
+  const [error, setError] = useState<string?>()
 
   useEffect(() => {
-    api.get('/api/data')
-      .then(d => setData(d))
+    api.get(ResponseSchema, '/api/data')
+      .then(r => setData(r))
+      .catch(e => setError(e.message))
   }, [])
 
-  return (
-    <div>
-      {
-        data !== undefined ?
-          <strong>{d.username}</strong> :
-          <em>Loading...</em>
-      }
-    </div>
-  )
+  if (error !== undefined) {
+    return <strong>Error: {error}</strong>
+  }
+
+  if (data === undefined) {
+    return <em>Loading...</em>
+  }
+
+  return <div>{data.username}</div>
 }
 ```
+
+The component above includes a loading message, error handling, and built-in type checking for the response!
