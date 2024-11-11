@@ -60,7 +60,7 @@ describe('testing ApiProvider', () => {
     fetch.mockOnce(JSON.stringify(testValueGood))
     await expect(result.current.post(TestTypeSchema, testPath, testValueGood)).resolves.toBeDefined()
     expect(fetch.mock.calls.length).toEqual(1)
-    expect(fetch.mock.calls[0][1]?.body).toStrictEqual(testValueGood)
+    expect(JSON.parse(fetch.mock.calls[0][1]?.body as string)).toStrictEqual(testValueGood)
   })
 
 })

@@ -61,7 +61,7 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
           ...init.headers,
           'Content-Type': 'application/json'
         },
-        body,
+        body: JSON.stringify(body),
       }
     }
     const response = await fetch(`${base}${url}`, init)
