@@ -112,6 +112,9 @@ export function ApiProvider(props: PropsWithChildren<ApiProviderProps>) {
       }
     }
     const response = await fetch(`${base}${url}`, init)
+    if (response.status === 204) {
+      return null
+    }
     let data
     try {
       data = await response.json()

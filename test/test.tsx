@@ -55,27 +55,27 @@ describe('testing ApiProvider (fetch)', () => {
   })
 
   it('throws an error for bad JSON', async () => {
-    fetch.mockOnce('')
+    fetch.mockResponseOnce('')
     await expect(result.current.get(TestTypeSchema, testPath)).rejects.toThrow()
   })
 
   it('throws an error for HTTP errors', async () => {
-    fetch.mockOnce('', { status: 400 })
+    fetch.mockResponseOnce(JSON.stringify(testValueGood), { status: 400 })
     await expect(result.current.get(TestTypeSchema, testPath)).rejects.toThrow()
   })
 
   it('throws an error for wrong type', async () => {
-    fetch.mockOnce(JSON.stringify(testValueBad1))
+    fetch.mockResponseOnce(JSON.stringify(testValueBad1))
     await expect(result.current.get(TestTypeSchema, testPath)).rejects.toThrow()
   })
 
   it('throws an error for missing key', async () => {
-    fetch.mockOnce(JSON.stringify(testValueBad2))
+    fetch.mockResponseOnce(JSON.stringify(testValueBad2))
     await expect(result.current.get(TestTypeSchema, testPath)).rejects.toThrow()
   })
 
   it('correctly handles base and headers', async () => {
-    fetch.mockOnce(JSON.stringify(testValueGood))
+    fetch.mockResponseOnce(JSON.stringify(testValueGood))
     await expect(result.current.get(TestTypeSchema, testPath)).resolves.toBeDefined()
     expect(fetch.mock.calls.length).toEqual(1)
     expect(fetch.mock.calls[0][0]).toEqual(`${testBase}${testPath}`)
@@ -83,26 +83,31 @@ describe('testing ApiProvider (fetch)', () => {
   })
 
   it('correctly parses JSON in a response', async () => {
-    fetch.mockOnce(JSON.stringify(testValueGood))
+    fetch.mockResponseOnce(JSON.stringify(testValueGood))
     await expect(result.current.get(TestTypeSchema, testPath)).resolves.toStrictEqual(testValueGood)
   })
 
   it('correctly sends JSON in request body', async () => {
-    fetch.mockOnce(JSON.stringify(testValueGood))
+    fetch.mockResponseOnce(JSON.stringify(testValueGood))
     await expect(result.current.post(TestTypeSchema, testPath, testValueGood)).resolves.toBeDefined()
     expect(fetch.mock.calls.length).toEqual(1)
     expect(JSON.parse(fetch.mock.calls[0][1]?.body as string)).toStrictEqual(testValueGood)
+  })
+
+  it('allows empty responses with a 204 status', async () => {
+    fetch.mockResponseOnce('', { status: 204 })
+    await expect(result.current.post(z.null(), testPath)).resolves.toBeNull()
   })
 })
 
 describe('testing ApiProvider (XMLHttpRequest)', () => {
 
   beforeEach(() => {
-    XMLHttpRequestMock.mockData(400, JSON.stringify(testValueGood))
+    XMLHttpRequestMock.resetMocks()
   })
 
   it('throws an error for HTTP errors', async () => {
-    fetch.mockOnce('', { status: 400 })
+    XMLHttpRequestMock.mockData(400, JSON.stringify(testValueGood))
     await expect(result.current.post(TestTypeSchema, testPath, testFormData)).rejects.toThrow()
   })
 
