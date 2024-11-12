@@ -96,7 +96,7 @@ describe('testing ApiProvider (fetch)', () => {
 
   it('allows empty responses with a 204 status', async () => {
     fetch.mockResponseOnce('', { status: 204 })
-    await expect(result.current.post(z.null(), testPath)).resolves.toBeNull()
+    await expect(result.current.post(z.void(), testPath)).resolves.toBeUndefined()
   })
 })
 
