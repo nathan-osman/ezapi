@@ -103,7 +103,7 @@ describe('testing ApiProvider (XMLHttpRequest)', () => {
 
   it('throws an error for HTTP errors', async () => {
     fetch.mockOnce('', { status: 400 })
-    await expect(result.current.get(TestTypeSchema, testPath)).rejects.toThrow()
+    await expect(result.current.post(TestTypeSchema, testPath, testFormData)).rejects.toThrow()
   })
 
   it('correctly sends FormData using XmlHttpRequest', async () => {
